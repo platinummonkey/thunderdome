@@ -133,17 +133,19 @@ class BaseValueManager(object):
 
 class Column(object):
     """Base class for column types"""
-
+    data_type = "Object"
     value_manager = BaseValueManager
     instance_counter = 0
 
     def __init__(self,
                  primary_key=False,
                  index=False,
+                 index_ext=None,
                  db_field=None,
                  default=None,
                  required=False,
-                 save_strategy=None):
+                 save_strategy=None,
+                 unique=None):
         """
         Initialize this column with the given information.
 
@@ -163,10 +165,12 @@ class Column(object):
         """
         self.primary_key = primary_key
         self.index = index
+        self.index_ext = index_ext
         self.db_field = db_field
         self.default = default
         self.required = required
         self.save_strategy = save_strategy
+        self.unique = unique
 
         #the column name in the model definition
         self.column_name = None
@@ -268,7 +272,7 @@ class Column(object):
 
 
 class String(Column):
-
+    data_type = "String"
     def __init__(self, *args, **kwargs):
         required = kwargs.get('required', False)
         self.min_length = kwargs.pop('min_length', 1 if required else None)
@@ -301,7 +305,7 @@ class String(Column):
 Text = String
 
 class Integer(Column):
-
+    data_type="Integer"
     def validate(self, value):
         val = super(Integer, self).validate(value)
 
@@ -324,7 +328,7 @@ class Integer(Column):
 
 
 class DateTime(Column):
-
+    data_type = "DateTime"
     def __init__(self, strict=True, **kwargs):
         """
         Initialize date-time column with the given settings.
@@ -359,7 +363,7 @@ class DateTime(Column):
 
 class UUID(Column):
     """Universally Unique Identifier (UUID) type - UUID4 by default"""
-    
+    data_type = "String"
     re_uuid = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
 
     def __init__(self, default=lambda: str(uuid4()), **kwargs):
@@ -386,7 +390,6 @@ class UUID(Column):
 
 
 class Boolean(Column):
-
     def to_python(self, value):
         return bool(value)
 
@@ -396,7 +399,7 @@ class Boolean(Column):
 
 
 class Double(Column):
-
+    data_type = "Double"
     def __init__(self, **kwargs):
         self.db_type = 'double'
         super(Double, self).__init__(**kwargs)
@@ -454,7 +457,7 @@ class Dictionary(Column):
 
 
 class List(Column):
-
+    data_type = "ArrayList"
     def validate(self, value):
         val = super(List, self).validate(value)
         if val is None:

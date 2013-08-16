@@ -13,7 +13,7 @@ def _save_vertex(eid, attrs) {
             if (item.value == null) {
                 v.removeProperty(item.key)
             } else {
-                v.setProperty(item.key, item.value)
+                v.addProperty(item.key, item.value)
             }
         }
         g.stopTransaction(SUCCESS)

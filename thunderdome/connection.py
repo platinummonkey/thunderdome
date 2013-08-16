@@ -86,7 +86,7 @@ _existing_indices = None
 _statsd = None
 
 
-def create_key_index(name):
+def create_key_index(name, data_type="Object", index_ext=None, unique=None):
     """
     Creates a key index if it does not already exist
     """
@@ -94,8 +94,11 @@ def create_key_index(name):
     _existing_indices = _existing_indices or execute_query('g.getIndexedKeys(Vertex.class)')
     if name not in _existing_indices:
         execute_query(
-            "g.createKeyIndex(keyname, Vertex.class); g.stopTransaction(SUCCESS)",
-            {'keyname':name}, transaction=False)
+            "g.makeType().name(name).dataType({}.class).indexed({}Vertex.class){}.makePropertyKey(); g.commit()".format(
+              data_type,
+              "%s," % index_ext if index_ext else "",
+              ".unique(Direction.%s)" % unique if unique else ""),
+            {'name':name}, transaction=False)
         _existing_indices = None
 
         
@@ -108,7 +111,7 @@ def create_unique_index(name, data_type):
     
     if name not in _existing_indices:
         execute_query(
-            "g.makeType().name(name).dataType({}.class).functional().unique().indexed().makePropertyKey(); g.stopTransaction(SUCCESS)".format(data_type),
+            "g.makeType().name(name).dataType({}.class).indexed(Vertex.class).unique(Direction.BOTH).makePropertyKey(); g.commit()".format(data_type),
             {'name':name}, transaction=False)
         _existing_indices = None
 
