@@ -104,3 +104,7 @@ def _delete_related(eid, operation, labels) {
     raise(err)
   }
 }
+
+def find_by_value(field, value) {
+    g.V(field, value)
+}

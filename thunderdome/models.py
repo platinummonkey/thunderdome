@@ -53,7 +53,7 @@ class ElementDefinitionException(ModelException):
     Error in element definition
     """
 
-    
+
 class SaveStrategyException(ModelException):
     """
     Violation of save strategy
@@ -69,7 +69,7 @@ class BaseElement(object):
     # When true this will prepend the module name to the type name of the class
     __use_module_name__ = False
     __default_save_strategy__ = properties.SAVE_ALWAYS
-    
+
     class DoesNotExist(DoesNotExist):
         """
         Object not found in database
@@ -79,7 +79,7 @@ class BaseElement(object):
         """
         Multiple objects returned on unique key lookup
         """
-        
+
     class WrongElementType(WrongElementType):
         """
         Unique lookup with key corresponding to vertex of different type
@@ -91,7 +91,7 @@ class BaseElement(object):
 
         :param values: The properties for this element
         :type values: dict
-        
+
         """
         self.eid = values.get('_id')
         self._values = {}
@@ -109,7 +109,7 @@ class BaseElement(object):
         :param other: Element to be compared to
         :type other: BaseElement
         :rtype: boolean
-        
+
         """
         if not isinstance(other, BaseElement): return False
         return self.as_dict() == other.as_dict() and self.eid == other.eid
@@ -121,7 +121,7 @@ class BaseElement(object):
         :param other: Element to be compared to
         :type other: BaseElement
         :rtype: boolean
-        
+
         """
         return not self.__eq__(other)
 
@@ -134,7 +134,7 @@ class BaseElement(object):
         :param manual_name: Name to override the default type name
         :type manual_name: str
         :rtype: str
-        
+
         """
         cf_name = ''
         if manual_name:
@@ -142,7 +142,7 @@ class BaseElement(object):
         else:
             camelcase = re.compile(r'([a-z])([A-Z])')
             ccase = lambda s: camelcase.sub(lambda v: '{}_{}'.format(v.group(1), v.group(2).lower()), s)
-    
+
             cf_name += ccase(cls.__name__)
             cf_name = cf_name.lower()
         if cls.__use_module_name__:
@@ -158,7 +158,7 @@ class BaseElement(object):
         :type field_name: str
         :param val: The value to be validated
         :type val: mixed
-        
+
         """
         return self._columns[field_name].validate(val)
 
@@ -178,7 +178,7 @@ class BaseElement(object):
         Returns a map of column names to cleaned values
 
         :rtype: dict
-        
+
         """
         values = {}
         for name, col in self._columns.items():
@@ -191,7 +191,7 @@ class BaseElement(object):
         columns which should be persisted on save.
 
         :rtype: dict
-        
+
         """
         values = {}
         was_saved = self.eid is not None
@@ -213,10 +213,10 @@ class BaseElement(object):
             elif col_strategy == properties.SAVE_ONCHANGE:
                 if was_saved and not self._values[name].changed:
                     should_save = False
-            
+
             if should_save:
                 values[col.db_field or name] = col.to_database(getattr(self, name, None))
-                
+
         return values
 
     @classmethod
@@ -242,11 +242,11 @@ class BaseElement(object):
     def create(cls, *args, **kwargs):
         """Create a new element with the given information."""
         return cls(*args, **kwargs).save()
-        
+
     def pre_save(self):
         """Pre-save hook which is run before saving an element"""
         self.validate()
-        
+
     def save(self):
         """
         Base class save method. Performs basic validation and error handling.
@@ -294,17 +294,17 @@ class BaseElement(object):
             setattr(self, name, value)
         return self
 
-    
+
 class ElementMetaClass(type):
     """Metaclass for all graph elements"""
-    
+
     def __new__(cls, name, bases, attrs):
         """
         """
         #move column definitions into columns dict
         #and set default column names
         column_dict = OrderedDict()
-        
+
         #get inherited properties
         for base in bases:
             for k,v in getattr(base, '_columns', {}).items():
@@ -324,12 +324,12 @@ class ElementMetaClass(type):
 
         column_definitions = [(k,v) for k,v in attrs.items() if isinstance(v, properties.Column)]
         column_definitions = sorted(column_definitions, lambda x,y: cmp(x[1].position, y[1].position))
-        
+
         #TODO: check that the defined columns don't conflict with any of the
         #Model API's existing attributes/methods transform column definitions
         for k,v in column_definitions:
             _transform_column(k,v)
-            
+
         #check for duplicate column names
         col_names = set()
         for v in column_dict.values():
@@ -345,10 +345,10 @@ class ElementMetaClass(type):
         #add management members to the class
         attrs['_columns'] = column_dict
         attrs['_db_map'] = db_map
-        
+
         #auto link gremlin methods
         gremlin_methods = {}
-        
+
         #get inherited gremlin methods
         for base in bases:
             for k,v in getattr(base, '_gremlin_methods', {}).items():
@@ -356,7 +356,7 @@ class ElementMetaClass(type):
 
         #short circuit __abstract__ inheritance
         attrs['__abstract__'] = attrs.get('__abstract__', False)
-                
+
         #short circuit path inheritance
         gremlin_path = attrs.get('gremlin_path')
         attrs['gremlin_path'] = gremlin_path
@@ -365,7 +365,7 @@ class ElementMetaClass(type):
             def method_wrapper(self, *args, **kwargs):
                 return method(self, *args, **kwargs)
             return method_wrapper
-        
+
         for k,v in attrs.items():
             if isinstance(v, BaseGremlinMethod):
                 gremlin_methods[k] = v
@@ -378,17 +378,17 @@ class ElementMetaClass(type):
 
         #create the class and add a QuerySet to it
         klass = super(ElementMetaClass, cls).__new__(cls, name, bases, attrs)
-        
+
         #configure the gremlin methods
         for name, method in gremlin_methods.items():
             method.configure_method(klass, name, gremlin_path)
-            
+
         return klass
 
 
 class Element(BaseElement):
     __metaclass__ = ElementMetaClass
-    
+
     @classmethod
     def deserialize(cls, data):
         """
@@ -409,11 +409,11 @@ class Element(BaseElement):
             return edge_types[edge_type](data['_outV'], data['_inV'], **translated_data)
         else:
             raise TypeError("Can't deserialize '{}'".format(dtype))
-    
-    
+
+
 class VertexMetaClass(ElementMetaClass):
     """Metaclass for vertices."""
-    
+
     def __new__(cls, name, bases, attrs):
 
         #short circuit element_type inheritance
@@ -432,7 +432,7 @@ class VertexMetaClass(ElementMetaClass):
 
         return klass
 
-    
+
 class Vertex(Element):
     """
     The Vertex model base class. All vertexes have a vid defined on them, the
@@ -447,10 +447,11 @@ class Vertex(Element):
     _save_vertex = GremlinMethod()
     _traversal = GremlinMethod()
     _delete_related = GremlinMethod()
+    find_by_value = GremlinMethod(classmethod=True)
 
     #vertex id
     vid = properties.UUID(save_strategy=properties.SAVE_ONCE)
-    
+
     element_type = None
 
     @classmethod
@@ -461,22 +462,22 @@ class Vertex(Element):
         vertices
         """
         from thunderdome.connection import _hosts, _index_all_fields, create_key_index
-        
+
         if not _hosts: return
         for column in cls._columns.values():
             if column.index or _index_all_fields:
                 create_key_index(column.db_field_name)
-    
+
     @classmethod
     def get_element_type(cls):
         """
         Returns the element type for this vertex.
 
         :rtype: str
-        
+
         """
         return cls._type_name(cls.element_type)
-    
+
     @classmethod
     def all(cls, vids, as_dict=False):
         """
@@ -490,20 +491,20 @@ class Vertex(Element):
         :param as_dict: Toggle whether to return a dictionary or list
         :type as_dict: boolean
         :rtype: dict or list
-        
+
         """
         if not isinstance(vids, (list, tuple)):
             raise ThunderdomeQueryError("vids must be of type list or tuple")
-        
+
         strvids = [str(v) for v in vids]
         qs = ['vids.collect{g.V("vid", it).toList()[0]}']
-        
+
         results = execute_query('\n'.join(qs), {'vids':strvids})
         results = filter(None, results)
-        
+
         if len(results) != len(vids):
             raise ThunderdomeQueryError("the number of results don't match the number of vids requested")
-        
+
         objects = []
         for r in results:
             try:
@@ -512,10 +513,10 @@ class Vertex(Element):
                 raise ThunderdomeQueryError('Vertex type "{}" is unknown'.format(
                     r.get('element_type', '')
                 ))
-            
+
         if as_dict:
             return {v.vid:v for v in objects}
-        
+
         return objects
 
     def _reload_values(self):
@@ -539,7 +540,7 @@ class Vertex(Element):
         :param vid: The thunderdome assigned UUID
         :type vid: str
         :rtype: thunderdome.models.Vertex
-        
+
         """
         try:
             results = cls.all([vid])
@@ -554,7 +555,7 @@ class Vertex(Element):
             return result
         except ThunderdomeQueryError:
             raise cls.DoesNotExist
-    
+
     @classmethod
     def get_by_eid(cls, eid):
         """
@@ -564,13 +565,13 @@ class Vertex(Element):
         :param eid: The numeric Titan-specific id
         :type eid: int
         :rtype: thunderdome.models.Vertex
-        
+
         """
         results = execute_query('g.v(eid)', {'eid':eid})
         if not results:
             raise cls.DoesNotExist
         return Element.deserialize(results[0])
-    
+
     def save(self, *args, **kwargs):
         """
         Save the current vertex using the configured save strategy, the default
@@ -584,7 +585,7 @@ class Vertex(Element):
         for k,v in self._values.items():
             v.previous_value = result._values[k].previous_value
         return result
-    
+
     def delete(self):
         """
         Delete the current vertex from the graph.
@@ -598,7 +599,7 @@ class Vertex(Element):
         g.stopTransaction(SUCCESS)
         """
         results = execute_query(query, {'eid': self.eid})
-        
+
     def _simple_traversal(self,
                           operation,
                           labels,
@@ -618,7 +619,7 @@ class Vertex(Element):
         :type max_results: int
         :param types: The list of allowed result elements
         :type types: list
-        
+
         """
         label_strings = []
         for label in labels:
@@ -646,7 +647,7 @@ class Vertex(Element):
             end = offset + limit
         else:
             start = end = None
-        
+
         return self._traversal(operation,
                                label_strings,
                                start,
@@ -661,7 +662,7 @@ class Vertex(Element):
         :type operation: str
         :param label: The edge label to be used
         :type label: str or Edge
-        
+
         """
         label_strings = []
         for label in labels:
@@ -677,7 +678,7 @@ class Vertex(Element):
         """
         Return a list of vertices reached by traversing the outgoing edge with
         the given label.
-        
+
         :param labels: pass in the labels to follow in as positional arguments
         :type labels: str or BaseEdge
         :param limit: The number of the page to start returning results at
@@ -686,7 +687,7 @@ class Vertex(Element):
         :type offset: int or None
         :param types: A list of allowed element types
         :type types: list
-        
+
         """
         return self._simple_traversal('outV', labels, **kwargs)
 
@@ -694,7 +695,7 @@ class Vertex(Element):
         """
         Return a list of vertices reached by traversing the incoming edge with
         the given label.
-        
+
         :param label: The edge label to be traversed
         :type label: str or BaseEdge
         :param limit: The number of the page to start returning results at
@@ -710,7 +711,7 @@ class Vertex(Element):
     def outE(self, *labels, **kwargs):
         """
         Return a list of edges with the given label going out of this vertex.
-        
+
         :param label: The edge label to be traversed
         :type label: str or BaseEdge
         :param limit: The number of the page to start returning results at
@@ -719,14 +720,14 @@ class Vertex(Element):
         :type offset: int or None
         :param types: A list of allowed element types
         :type types: list
-        
+
         """
         return self._simple_traversal('outE', labels, **kwargs)
 
     def inE(self, *labels, **kwargs):
         """
         Return a list of edges with the given label coming into this vertex.
-        
+
         :param label: The edge label to be traversed
         :type label: str or BaseEdge
         :param limit: The number of the page to start returning results at
@@ -735,7 +736,7 @@ class Vertex(Element):
         :type offset: int or None
         :param types: A list of allowed element types
         :type types: list
-        
+
         """
         return self._simple_traversal('inE', labels, **kwargs)
 
@@ -751,7 +752,7 @@ class Vertex(Element):
         :type offset: int or None
         :param types: A list of allowed element types
         :type types: list
-        
+
         """
         return self._simple_traversal('bothE', labels, **kwargs)
 
@@ -767,7 +768,7 @@ class Vertex(Element):
         :type offset: int or None
         :param types: A list of allowed element types
         :type types: list
-        
+
         """
         return self._simple_traversal('bothV', labels, **kwargs)
 
@@ -791,8 +792,8 @@ class Vertex(Element):
     def query(self):
         return Query(self)
 
-        
-        
+
+
 def to_offset(page_num, per_page):
     """
     Convert a page_num and per_page to offset.
@@ -802,14 +803,14 @@ def to_offset(page_num, per_page):
     :param per_page: The maximum number of results per page
     :type per_page: int
     :rtype: int
-    
+
     """
     if page_num and per_page:
         return (page_num-1) * per_page
     else:
         return None
-    
-    
+
+
 class PaginatedVertex(Vertex):
     """
     Convenience class to easily handle pagination for traversals
@@ -839,7 +840,7 @@ class PaginatedVertex(Vertex):
         :return:
         """
         return super(PaginatedVertex, self).outV(*labels, **self._transform_kwargs(kwargs))
-    
+
     def outE(self, *labels, **kwargs):
         """
         :param labels: pass in the labels to follow in as positional arguments
@@ -849,7 +850,7 @@ class PaginatedVertex(Vertex):
         :return:
         """
         return super(PaginatedVertex, self).outE(*labels, **self._transform_kwargs(kwargs))
-            
+
     def inV(self, *labels, **kwargs):
         """
         :param labels: pass in the labels to follow in as positional arguments
@@ -859,7 +860,7 @@ class PaginatedVertex(Vertex):
         :return:
         """
         return super(PaginatedVertex, self).inV(*labels, **self._transform_kwargs(kwargs))
-    
+
     def inE(self, *labels, **kwargs):
         """
         :param labels: pass in the labels to follow in as positional arguments
@@ -869,7 +870,7 @@ class PaginatedVertex(Vertex):
         :return:
         """
         return super(PaginatedVertex, self).inE(*labels, **self._transform_kwargs(kwargs))
-    
+
     def bothV(self, *labels, **kwargs):
         """
         :param labels: pass in the labels to follow in as positional arguments
@@ -879,7 +880,7 @@ class PaginatedVertex(Vertex):
         :return:
         """
         return super(PaginatedVertex, self).bothV(*labels, **self._transform_kwargs(kwargs))
-    
+
     def bothE(self, *labels, **kwargs):
         """
         :param labels: pass in the labels to follow in as positional arguments
@@ -889,11 +890,11 @@ class PaginatedVertex(Vertex):
         :return:
         """
         return super(PaginatedVertex, self).bothE(*labels, **self._transform_kwargs(kwargs))
-    
-    
+
+
 class EdgeMetaClass(ElementMetaClass):
     """Metaclass for edges."""
-    
+
     def __new__(cls, name, bases, attrs):
         #short circuit element_type inheritance
         attrs['label'] = attrs.pop('label', None)
@@ -907,24 +908,24 @@ class EdgeMetaClass(ElementMetaClass):
             edge_types[klass.get_label()] = klass
         return klass
 
-    
+
 class Edge(Element):
     """Base class for all edges."""
-    
+
     __metaclass__ = EdgeMetaClass
     __abstract__ = True
 
     # if set to True, no more than one edge will
     # be created between two vertices
     __exclusive__ = False
-    
+
     label = None
-    
+
     gremlin_path = 'edge.groovy'
-    
+
     _save_edge = GremlinMethod()
     _get_edges_between = GremlinMethod(classmethod=True)
-    
+
     def __init__(self, outV, inV, **values):
         """
         Initialize this edge with the outgoing and incoming vertices as well as
@@ -936,27 +937,27 @@ class Edge(Element):
         :type inV: Vertex
         :param values: The properties for this edge
         :type values: dict
-        
+
         """
         self._outV = outV
         self._inV = inV
         super(Edge, self).__init__(**values)
-        
+
     @classmethod
     def get_label(cls):
         """
         Returns the label for this edge.
 
         :rtype: str
-        
+
         """
         return cls._type_name(cls.label)
-    
+
     @classmethod
     def get_between(cls, outV, inV, page_num=None, per_page=None):
         """
         Return all the edges with a given label between two vertices.
-        
+
         :param outV: The vertex the edge comes out of.
         :type outV: Vertex
         :param inV: The vertex the edge goes into.
@@ -966,14 +967,14 @@ class Edge(Element):
         :param per_page: The number of results per page
         :type per_page : int
         :rtype: list
-        
+
         """
         return cls._get_edges_between(out_v=outV,
                                       in_v=inV,
                                       label=cls.get_label(),
                                       page_num=page_num,
                                       per_page=per_page)
-    
+
     def validate(self):
         """
         Perform validation of this edge raising a ValidationError if any
@@ -985,7 +986,7 @@ class Edge(Element):
             if self._outV is None:
                 raise ValidationError('out vertex must be set before saving new edges')
         super(Edge, self).validate()
-        
+
     def save(self, *args, **kwargs):
         """
         Save this edge to the graph database.
@@ -1014,7 +1015,7 @@ class Edge(Element):
 
         :param eid: The Titan-specific edge id (eid)
         :type eid: int
-        
+
         """
         results = execute_query('g.e(eid)', {'eid':eid})
         if not results:
@@ -1031,10 +1032,10 @@ class Edge(Element):
         :type outV: Vertex
         :param inV: The vertex the edge is going into
         :type inV: Vertex
-        
+
         """
         return super(Edge, cls).create(outV, inV, *args, **kwargs)
-    
+
     def delete(self):
         """
         Delete the current edge from the graph.
@@ -1049,7 +1050,7 @@ class Edge(Element):
           g.removeEdge(e)
           g.stopTransaction(SUCCESS)
         }
-        """        
+        """
         results = execute_query(query, {'eid':self.eid})
 
     def _simple_traversal(self, operation):
@@ -1060,30 +1061,30 @@ class Edge(Element):
         :param operation: The operation to be performed
         :type operation: str
         :rtype: list
-        
+
         """
         results = execute_query('g.e(eid).%s()'%operation, {'eid':self.eid})
         return [Element.deserialize(r) for r in results]
-        
+
     def inV(self):
         """
         Return the vertex that this edge goes into.
 
         :rtype: Vertex
-        
+
         """
         if self._inV is None:
             self._inV = self._simple_traversal('inV')
         elif isinstance(self._inV, (int, long)):
             self._inV = Vertex.get_by_eid(self._inV)
         return self._inV
-    
+
     def outV(self):
         """
         Return the vertex that this edge is coming out of.
 
         :rtype: Vertex
-        
+
         """
         if self._outV is None:
             self._outV = self._simple_traversal('outV')
