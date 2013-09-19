@@ -466,8 +466,7 @@ class Vertex(Element):
         if not _hosts: return
         for column in cls._columns.values():
             if column.index or _index_all_fields:
-                create_key_index(column.db_field_name)
-
+                create_key_index(column.db_field_name, column.data_type, column.index_ext, column.unique)
     @classmethod
     def get_element_type(cls):
         """
@@ -1023,7 +1022,7 @@ class Edge(Element):
         return Element.deserialize(results[0])
 
     @classmethod
-    def create(cls, outV, inV, *args, **kwargs):
+    def create(cls, outV, inV, label=None, *args, **kwargs):
         """
         Create a new edge of the current type coming out of vertex outV and
         going into vertex inV with the given properties.
