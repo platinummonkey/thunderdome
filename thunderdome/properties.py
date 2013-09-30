@@ -138,6 +138,7 @@ class Column(object):
     instance_counter = 0
 
     def __init__(self,
+                 description=None,
                  primary_key=False,
                  index=False,
                  index_ext=None,
@@ -149,6 +150,8 @@ class Column(object):
         """
         Initialize this column with the given information.
 
+        :param description: description of this field
+        :type description: str
         :param primary_key: Indicates whether or not this is primary key
         :type primary_key: boolean
         :param index: Indicates whether or not this field should be indexed
@@ -163,6 +166,7 @@ class Column(object):
         :type save_strategy: int
 
         """
+        self.description = description
         self.primary_key = primary_key
         self.index = index
         self.index_ext = index_ext
@@ -335,7 +339,7 @@ class DateTime(Column):
 
         :param strict: Whether or not to attempt to automatically coerce types
         :type strict: boolean
-        
+
         """
         self.strict = strict
         super(DateTime, self).__init__(**kwargs)
@@ -425,7 +429,7 @@ class Double(Column):
 
 class Float(Double):
     """Float class for backwards compatability / if you really want to"""
-    
+
     def __init__(self, **kwargs):
         warnings.warn("Float type is deprecated. Please use Double.",
                       category=DeprecationWarning)
