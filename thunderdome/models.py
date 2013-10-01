@@ -478,7 +478,7 @@ class Vertex(Element):
         return cls._type_name(cls.element_type)
 
     @classmethod
-    def all(cls, vids, as_dict=False):
+    def all(cls, vids=[], as_dict=False):
         """
         Load all vertices with the given vids from the graph. By default this
         will return a list of vertices but if as_dict is True then it will
@@ -495,14 +495,18 @@ class Vertex(Element):
         if not isinstance(vids, (list, tuple)):
             raise ThunderdomeQueryError("vids must be of type list or tuple")
 
-        strvids = [str(v) for v in vids]
-        qs = ['vids.collect{g.V("vid", it).toList()[0]}']
+        if len(vids) < 1:
+            results = execute_query('g.V("element_type","{}").toList()'.format(cls.get_element_type()))
 
-        results = execute_query('\n'.join(qs), {'vids':strvids})
-        results = filter(None, results)
+        else:
+            strvids = [str(v) for v in vids]
+            qs = ['vids.collect{g.V("vid", it).toList()[0]}']
 
-        if len(results) != len(vids):
-            raise ThunderdomeQueryError("the number of results don't match the number of vids requested")
+            results = execute_query('\n'.join(qs), {'vids':strvids})
+            results = filter(None, results)
+
+            if len(results) != len(vids):
+                raise ThunderdomeQueryError("the number of results don't match the number of vids requested")
 
         objects = []
         for r in results:

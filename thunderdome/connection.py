@@ -53,7 +53,7 @@ class ThunderdomeQueryError(ThunderdomeException):
         :type message: str
         :param full_response: The full query response
         :type full_response: dict
-        
+
         """
         super(ThunderdomeQueryError, self).__init__(message)
         self._full_response = full_response
@@ -64,7 +64,7 @@ class ThunderdomeQueryError(ThunderdomeException):
         Return the raw query response.
 
         :rtype: dict
-        
+
         """
         return self._full_response
 
@@ -101,21 +101,21 @@ def create_key_index(name, data_type="Object", index_ext=None, unique=None):
             {'name':name}, transaction=False)
         _existing_indices = None
 
-        
+
 def create_unique_index(name, data_type):
     """
     Creates a key index if it does not already exist
     """
     global _existing_indices
     _existing_indices = _existing_indices or execute_query('g.getIndexedKeys(Vertex.class)')
-    
+
     if name not in _existing_indices:
         execute_query(
             "g.makeType().name(name).dataType({}.class).indexed(Vertex.class).unique(Direction.BOTH).makePropertyKey(); g.commit()".format(data_type),
             {'name':name}, transaction=False)
         _existing_indices = None
 
-        
+
 def setup(hosts, graph_name, username=None, password=None, index_all_fields=False, statsd=None):
     """
     Records the hosts and connects to one of them.
@@ -174,15 +174,15 @@ def setup(hosts, graph_name, username=None, password=None, index_all_fields=Fals
         raise ThunderdomeConnectionError("At least one host required")
 
     random.shuffle(_hosts)
-    
+
     create_unique_index('vid', 'String')
 
     #index any models that have already been defined
     from thunderdome.models import vertex_types
     for klass in vertex_types.values():
         klass._create_indices()
-    
-    
+
+
 def execute_query(query, params={}, transaction=True, context=""):
     """
     Execute a raw Gremlin query with the given parameters passed in.
@@ -193,7 +193,7 @@ def execute_query(query, params={}, transaction=True, context=""):
     :type params: dict
     :param context: String context data to include with the query for stats logging
     :rtype: dict
-    
+
     """
     if transaction:
         query = "g.stopTransaction(FAILURE)\n" + query
@@ -201,7 +201,7 @@ def execute_query(query, params={}, transaction=True, context=""):
     # If we have no hosts available raise an exception
     if len(_hosts) <= 0:
         raise ThunderdomeConnectionError('Attempt to execute query before calling thunderdome.connection.setup')
-    
+
     host = _hosts[0]
     #url = 'http://{}/graphs/{}/tp/gremlin'.format(host.name, _graph_name)
     data = json.dumps({'script':query, 'params': params})
@@ -228,7 +228,7 @@ def execute_query(query, params={}, transaction=True, context=""):
         raise ThunderdomeQueryError('Socket error during query - {}'.format(sock_err))
     except:
         raise
-    
+
     logger.info(json.dumps(data))
     logger.info(content)
 
@@ -236,7 +236,7 @@ def execute_query(query, params={}, transaction=True, context=""):
         response_data = json.loads(content)
     except ValueError as ve:
         raise ThunderdomeQueryError('Loading Rexster results failed: "{}"'.format(ve))
-    
+
     if response.status != 200:
         if 'message' in response_data and len(response_data['message']) > 0:
             graph_missing_re = r"Graph \[(.*)\] could not be found"
@@ -255,7 +255,7 @@ def execute_query(query, params={}, transaction=True, context=""):
                 response_data
             )
 
-    return response_data['results'] 
+    return response_data['results']
 
 
 def sync_spec(filename, host, graph_name, dry_run=False):
@@ -270,6 +270,6 @@ def sync_spec(filename, host, graph_name, dry_run=False):
     :type graph_name: str
     :param dry_run: Only prints generated Gremlin if True
     :type dry_run: boolean
-    
+
     """
     Spec(filename).sync(host, graph_name, dry_run=dry_run)
