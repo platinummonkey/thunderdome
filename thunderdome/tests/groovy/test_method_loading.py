@@ -28,8 +28,9 @@ from thunderdome.models import Vertex
 from thunderdome import properties
 from thunderdome import gremlin
 
+
 class GroovyTestModel(Vertex):
-    text    = properties.Text()
+    text = properties.Text()
     get_self = gremlin.GremlinMethod()
     cm_get_self = gremlin.GremlinMethod(method_name='get_self', classmethod=True)
 
@@ -40,16 +41,17 @@ class GroovyTestModel(Vertex):
     arg_test1 = gremlin.GremlinValue()
     arg_test2 = gremlin.GremlinValue()
 
+
 class TestMethodLoading(BaseThunderdomeTestCase):
     
     def test_method_loads_and_works(self):
         v1 = GroovyTestModel.create(text='cross fingers')
         
         v2 = v1.get_self()
-        assert v1.vid == v2[0].vid
+        self.assertEqual(v1.vid, v2[0].vid)
         
         v3 = v1.cm_get_self(v1.eid)
-        assert v1.vid == v3[0].vid
+        self.assertEqual(v1.vid, v3[0].vid)
         
 
 class TestMethodArgumentHandling(BaseThunderdomeTestCase):
@@ -59,7 +61,7 @@ class TestMethodArgumentHandling(BaseThunderdomeTestCase):
         Tests that callable default arguments are called
         """
         v1 = GroovyTestModel.create(text='cross fingers')
-        assert v1.return_default() == 5000
+        self.assertEqual(v1.return_default(), 5000)
 
     def test_gremlin_value_enforces_single_object_returned(self):
         """
@@ -74,14 +76,14 @@ class TestMethodArgumentHandling(BaseThunderdomeTestCase):
         v1 = GroovyTestModel.create(text='cross fingers')
 
         now = datetime.now()
-        assert v1.return_value(now) == properties.DateTime().to_database(now)
+        self.assertEqual(v1.return_value(now), properties.DateTime().to_database(now))
 
         uu = uuid4()
-        assert v1.return_value(uu) == properties.UUID().to_database(uu)
+        self.assertEqual(v1.return_value(uu), properties.UUID().to_database(uu))
 
     def test_initial_arg_name_isnt_set(self):
         """ Tests that the name of the first argument in a instance method """
         v = GroovyTestModel.create(text='cross fingers')
 
-        assert v == v.arg_test1()
-        assert v == v.arg_test2()
+        self.assertEqual(v, v.arg_test1())
+        self.assertEqual(v, v.arg_test2())

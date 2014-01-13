@@ -277,6 +277,7 @@ class Column(object):
 
 class String(Column):
     data_type = "String"
+
     def __init__(self, *args, **kwargs):
         required = kwargs.get('required', False)
         self.min_length = kwargs.pop('min_length', 1 if required else None)
@@ -308,8 +309,10 @@ class String(Column):
 
 Text = String
 
+
 class Integer(Column):
-    data_type="Integer"
+    data_type = "Integer"
+
     def validate(self, value):
         val = super(Integer, self).validate(value)
 
@@ -333,6 +336,7 @@ class Integer(Column):
 
 class DateTime(Column):
     data_type = "DateTime"
+
     def __init__(self, strict=True, **kwargs):
         """
         Initialize date-time column with the given settings.
@@ -359,9 +363,9 @@ class DateTime(Column):
             else:
                 raise ValidationError("'{}' is not a datetime object".format(value))
 
-        tmp = time.mktime(value.timetuple()) # gives us a float with .0
+        tmp = time.mktime(value.timetuple())  # gives us a float with .0
         # microtime is a 6 digit int, so we bring it down to .xxx and add it to the float TS
-        tmp = tmp + float(value.microsecond) / 1000000
+        tmp += float(value.microsecond) / 1000000
         return tmp
 
 
@@ -404,6 +408,7 @@ class Boolean(Column):
 
 class Double(Column):
     data_type = "Double"
+
     def __init__(self, **kwargs):
         self.db_type = 'double'
         super(Double, self).__init__(**kwargs)
@@ -462,6 +467,7 @@ class Dictionary(Column):
 
 class List(Column):
     data_type = "ArrayList"
+
     def validate(self, value):
         val = super(List, self).validate(value)
         if val is None:

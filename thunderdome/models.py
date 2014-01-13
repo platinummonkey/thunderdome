@@ -24,7 +24,7 @@ from uuid import UUID
 import warnings
 
 from thunderdome import properties
-from thunderdome.connection import execute_query, create_key_index, ThunderdomeQueryError
+from thunderdome.connection import execute_query, create_key_index, ThunderdomeQueryError, _hosts, _index_all_fields
 from thunderdome.exceptions import ModelException, ValidationError, DoesNotExist, MultipleObjectsReturned, ThunderdomeException, WrongElementType
 from thunderdome.gremlin import BaseGremlinMethod, GremlinMethod
 
@@ -272,7 +272,7 @@ class BaseElement(object):
             if key not in self._columns:
                 raise TypeError("unrecognized attribute name: '{}'".format(key))
 
-        for k,v in values.items():
+        for k, v in values.items():
             setattr(self, k, v)
 
         return self.save()
@@ -283,14 +283,16 @@ class BaseElement(object):
         """
         raise NotImplementedError
 
-    def reload(self):
+    def reload(self, debug=False):
         """
         Reload the given element from the database.
         """
         values = self._reload_values()
         for name, column in self._columns.items():
+            if debug:  print name, column
             value = values.get(column.db_field_name, None)
-            if value is not None: value = column.to_python(value)
+            if value is not None:
+                value = column.to_python(value)
             setattr(self, name, value)
         return self
 
@@ -298,7 +300,7 @@ class BaseElement(object):
 class ElementMetaClass(type):
     """Metaclass for all graph elements"""
 
-    def __new__(cls, name, bases, attrs):
+    def __new__(mcs, name, bases, body):
         """
         """
         #move column definitions into columns dict
@@ -307,8 +309,8 @@ class ElementMetaClass(type):
 
         #get inherited properties
         for base in bases:
-            for k,v in getattr(base, '_columns', {}).items():
-                column_dict.setdefault(k,v)
+            for k, v in getattr(base, '_columns', {}).items():
+                column_dict.setdefault(k, v)
 
         def _transform_column(col_name, col_obj):
             column_dict[col_name] = col_obj
@@ -318,17 +320,17 @@ class ElementMetaClass(type):
             _set = lambda self, val: self._values[col_name].setval(val)
             _del = lambda self: self._values[col_name].delval()
             if col_obj.can_delete:
-                attrs[col_name] = property(_get, _set, _del)
+                body[col_name] = property(_get, _set, _del)
             else:
-                attrs[col_name] = property(_get, _set)
+                body[col_name] = property(_get, _set)
 
-        column_definitions = [(k,v) for k,v in attrs.items() if isinstance(v, properties.Column)]
-        column_definitions = sorted(column_definitions, lambda x,y: cmp(x[1].position, y[1].position))
+        column_definitions = [(k, v) for k, v in body.items() if isinstance(v, properties.Column)]
+        column_definitions = sorted(column_definitions, lambda x, y: cmp(x[1].position, y[1].position))
 
         #TODO: check that the defined columns don't conflict with any of the
         #Model API's existing attributes/methods transform column definitions
-        for k,v in column_definitions:
-            _transform_column(k,v)
+        for k, v in column_definitions:
+            _transform_column(k, v)
 
         #check for duplicate column names
         col_names = set()
@@ -343,41 +345,43 @@ class ElementMetaClass(type):
             db_map[col.db_field_name] = field_name
 
         #add management members to the class
-        attrs['_columns'] = column_dict
-        attrs['_db_map'] = db_map
+        body['_columns'] = column_dict
+        body['_db_map'] = db_map
 
         #auto link gremlin methods
         gremlin_methods = {}
 
         #get inherited gremlin methods
         for base in bases:
-            for k,v in getattr(base, '_gremlin_methods', {}).items():
+            for k, v in getattr(base, '_gremlin_methods', {}).items():
                 gremlin_methods.setdefault(k, v)
 
         #short circuit __abstract__ inheritance
-        attrs['__abstract__'] = attrs.get('__abstract__', False)
+        body['__abstract__'] = body.get('__abstract__', False)
 
         #short circuit path inheritance
-        gremlin_path = attrs.get('gremlin_path')
-        attrs['gremlin_path'] = gremlin_path
+        gremlin_path = body.get('gremlin_path')
+        body['gremlin_path'] = gremlin_path
 
         def wrap_method(method):
             def method_wrapper(self, *args, **kwargs):
                 return method(self, *args, **kwargs)
             return method_wrapper
 
-        for k,v in attrs.items():
+        for k, v in body.items():
             if isinstance(v, BaseGremlinMethod):
                 gremlin_methods[k] = v
                 method = wrap_method(v)
-                attrs[k] = method
-                if v.classmethod: attrs[k] = classmethod(method)
-                if v.property: attrs[k] = property(method)
+                body[k] = method
+                if v.classmethod:
+                    body[k] = classmethod(method)
+                if v.property:
+                    body[k] = property(method)
 
-        attrs['_gremlin_methods'] = gremlin_methods
+        body['_gremlin_methods'] = gremlin_methods
 
         #create the class and add a QuerySet to it
-        klass = super(ElementMetaClass, cls).__new__(cls, name, bases, attrs)
+        klass = super(ElementMetaClass, mcs).__new__(mcs, name, bases, body)
 
         #configure the gremlin methods
         for name, method in gremlin_methods.items():
@@ -414,12 +418,12 @@ class Element(BaseElement):
 class VertexMetaClass(ElementMetaClass):
     """Metaclass for vertices."""
 
-    def __new__(cls, name, bases, attrs):
+    def __new__(mcs, name, bases, body):
 
         #short circuit element_type inheritance
-        attrs['element_type'] = attrs.pop('element_type', None)
+        body['element_type'] = body.pop('element_type', None)
 
-        klass = super(VertexMetaClass, cls).__new__(cls, name, bases, attrs)
+        klass = super(VertexMetaClass, mcs).__new__(mcs, name, bases, body)
 
         if not klass.__abstract__:
             element_type = klass.get_element_type()
@@ -436,7 +440,7 @@ class VertexMetaClass(ElementMetaClass):
 class Vertex(Element):
     """
     The Vertex model base class. All vertexes have a vid defined on them, the
-    element type is autogenerated from the subclass name, but can optionally be
+    element type is auto-generated from the subclass name, but can optionally be
     set manually
     """
     __metaclass__ = VertexMetaClass
@@ -461,12 +465,17 @@ class Vertex(Element):
         hasn't been called, but connection.setup calls this method on existing
         vertices
         """
-        from thunderdome.connection import _hosts, _index_all_fields, create_key_index
+        #from thunderdome.connection import _hosts, _index_all_fields  #, create_key_index
 
-        if not _hosts: return
+        if not _hosts:
+            return
         for column in cls._columns.values():
             if column.index or _index_all_fields:
-                create_key_index(column.db_field_name, column.data_type, column.index_ext, column.unique)
+                create_key_index(name=column.db_field_name,
+                                 data_type=column.data_type,
+                                 index_ext=column.index_ext,
+                                 unique=column.unique)
+
     @classmethod
     def get_element_type(cls):
         """
@@ -502,7 +511,7 @@ class Vertex(Element):
             strvids = [str(v) for v in vids]
             qs = ['vids.collect{g.V("vid", it).toList()[0]}']
 
-            results = execute_query('\n'.join(qs), {'vids':strvids})
+            results = execute_query('\n'.join(qs), {'vids': strvids})
             results = filter(None, results)
 
             if len(results) != len(vids):
@@ -527,7 +536,7 @@ class Vertex(Element):
         Method for reloading the current vertex by reading its current values
         from the database.
         """
-        results = execute_query('g.v(eid)', {'eid':self.eid})[0]
+        results = execute_query('g.v(eid)', {'eid': self.eid})[0]
         del results['_id']
         del results['_type']
         return results
@@ -547,7 +556,7 @@ class Vertex(Element):
         """
         try:
             results = cls.all([vid])
-            if len(results) >1:
+            if len(results) > 1:
                 raise cls.MultipleObjectsReturned
 
             result = results[0]
@@ -570,7 +579,7 @@ class Vertex(Element):
         :rtype: thunderdome.models.Vertex
 
         """
-        results = execute_query('g.v(eid)', {'eid':eid})
+        results = execute_query('g.v(eid)', {'eid': eid})
         if not results:
             raise cls.DoesNotExist
         return Element.deserialize(results[0])
@@ -585,7 +594,7 @@ class Vertex(Element):
         params['element_type'] = self.get_element_type()
         result = self._save_vertex(params)[0]
         self.eid = result.eid
-        for k,v in self._values.items():
+        for k, v in self._values.items():
             v.previous_value = result._values[k].previous_value
         return result
 
@@ -796,7 +805,6 @@ class Vertex(Element):
         return Query(self)
 
 
-
 def to_offset(page_num, per_page):
     """
     Convert a page_num and per_page to offset.
@@ -834,6 +842,7 @@ class PaginatedVertex(Vertex):
         }
 
     __abstract__ = True
+
     def outV(self, *labels, **kwargs):
         """
         :param labels: pass in the labels to follow in as positional arguments
@@ -898,11 +907,11 @@ class PaginatedVertex(Vertex):
 class EdgeMetaClass(ElementMetaClass):
     """Metaclass for edges."""
 
-    def __new__(cls, name, bases, attrs):
+    def __new__(mcs, name, bases, body):
         #short circuit element_type inheritance
-        attrs['label'] = attrs.pop('label', None)
+        body['label'] = body.pop('label', None)
 
-        klass = super(EdgeMetaClass, cls).__new__(cls, name, bases, attrs)
+        klass = super(EdgeMetaClass, mcs).__new__(mcs, name, bases, body)
 
         if not klass.__abstract__:
             label = klass.get_label()
@@ -1005,7 +1014,7 @@ class Edge(Element):
         """
         Re-read the values for this edge from the graph database.
         """
-        results = execute_query('g.e(eid)', {'eid':self.eid})[0]
+        results = execute_query('g.e(eid)', {'eid': self.eid})[0]
         del results['_id']
         del results['_type']
         return results
@@ -1020,7 +1029,7 @@ class Edge(Element):
         :type eid: int
 
         """
-        results = execute_query('g.e(eid)', {'eid':eid})
+        results = execute_query('g.e(eid)', {'eid': eid})
         if not results:
             raise cls.DoesNotExist
         return Element.deserialize(results[0])
@@ -1054,7 +1063,7 @@ class Edge(Element):
           g.stopTransaction(SUCCESS)
         }
         """
-        results = execute_query(query, {'eid':self.eid})
+        results = execute_query(query, {'eid': self.eid})
 
     def _simple_traversal(self, operation):
         """
@@ -1066,7 +1075,7 @@ class Edge(Element):
         :rtype: list
 
         """
-        results = execute_query('g.e(eid).%s()'%operation, {'eid':self.eid})
+        results = execute_query('g.e(eid).%s()' % operation, {'eid': self.eid})
         return [Element.deserialize(r) for r in results]
 
     def inV(self):
@@ -1095,9 +1104,8 @@ class Edge(Element):
             self._outV = Vertex.get_by_eid(self._outV)
         return self._outV
 
-
-
 import copy
+
 
 class Query(object):
     """
@@ -1149,7 +1157,7 @@ class Query(object):
         compare = "Query.Compare.{}".format(compare)
 
         q = copy.copy(self)
-        q._has.append((key,value,compare))
+        q._has.append((key, value, compare))
         return q
 
     def interval(self, key, start, end):
@@ -1162,7 +1170,6 @@ class Query(object):
         q = copy.copy(self)
         q._interval.append((key, start, end))
         return q
-
 
     def labels(self, *args):
         """
@@ -1243,16 +1250,10 @@ class Query(object):
 
     def _execute(self, func, deserialize=True):
         tmp = "{}.{}()".format(self._get_partial(), func)
-        self._vars.update({"eid":self._vertex.eid, "limit":self._limit})
+        self._vars.update({"eid": self._vertex.eid, "limit": self._limit})
         results = execute_query(tmp, self._vars)
 
         if deserialize:
-            return  [Element.deserialize(r) for r in results]
+            return [Element.deserialize(r) for r in results]
         else:
             return results
-
-
-
-
-
-

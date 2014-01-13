@@ -16,12 +16,15 @@ class OtherTestModel(Vertex):
     count = properties.Integer()
     text  = properties.Text()
 
+
 class AliasedTestModel(Vertex):
     count = properties.Integer(db_field='how_many')
-    text  = properties.Text()
+    text = properties.Text()
+
 
 class OtherTestEdge(Edge):
     numbers = properties.Integer()
+
 
 class YetAnotherTestEdge(Edge):
     numbers = properties.Integer()
@@ -95,7 +98,7 @@ class TestVertexIO(BaseThunderdomeTestCase):
         tm1.save()
 
         tm0.reload()
-        assert tm0.count == 7
+        self.assertEqual(tm0.count, 7)
 
     def test_reload_on_aliased_field(self):
         """ Tests that reload works with aliased fields """
@@ -105,16 +108,18 @@ class TestVertexIO(BaseThunderdomeTestCase):
         tm1.save()
 
         tm0.reload()
-        assert tm0.count == 7
+        self.assertEqual(tm0.count, 7)
+
 
 class DeserializationTestModel(Vertex):
     count = properties.Integer()
-    text  = properties.Text()
+    text = properties.Text()
 
     gremlin_path = 'deserialize.groovy'
 
     get_map = gremlin.GremlinValue()
     get_list = gremlin.GremlinMethod()
+
 
 class TestNestedDeserialization(BaseThunderdomeTestCase):
     """
@@ -129,9 +134,9 @@ class TestNestedDeserialization(BaseThunderdomeTestCase):
         original = DeserializationTestModel.create(count=5, text='happy')
         nested = original.get_map()
 
-        assert isinstance(nested, dict)
-        assert nested['vertex'] == original
-        assert nested['number'] == 5
+        self.assertIsInstance(nested, dict)
+        self.assertEqual(nested['vertex'], original)
+        self.assertEqual(nested['number'], 5)
 
     def test_list_deserialization(self):
         """
@@ -141,17 +146,18 @@ class TestNestedDeserialization(BaseThunderdomeTestCase):
         original = DeserializationTestModel.create(count=5, text='happy')
         nested = original.get_list()
 
-        assert isinstance(nested, list)
-        assert nested[0] == None
-        assert nested[1] == 0
-        assert nested[2] == 1
+        self.assertIsInstance(nested, list)
+        self.assertEqual(nested[0], None)
+        self.assertEqual(nested[1], 0)
+        self.assertEqual(nested[2], 1)
 
-        assert isinstance(nested[3], list)
-        assert nested[3][0] == 2
-        assert nested[3][1] == original
-        assert nested[3][2] == 3
+        self.assertIsInstance(nested[3], list)
+        self.assertEqual(nested[3][0], 2)
+        self.assertEqual(nested[3][1], original)
+        self.assertEqual(nested[3][2], 3)
 
-        assert nested[4] == 5
+        self.assertEqual(nested[4], 5)
+
 
 class TestUpdateMethod(BaseThunderdomeTestCase):
     def test_success_case(self):
@@ -160,8 +166,8 @@ class TestUpdateMethod(BaseThunderdomeTestCase):
         tm2 = tm.update(count=9)
 
         tm3 = TestModel.get(tm.vid)
-        assert tm2.count == 9
-        assert tm3.count == 9
+        self.assertEqual(tm2.count, 9)
+        self.assertEqual(tm3.count, 9)
 
     def test_unknown_names_raise_exception(self):
         """ Tests that passing in names for columns that don't exist raises an exception """
@@ -186,15 +192,14 @@ class TestVertexTraversal(BaseThunderdomeTestCase):
         e3 = TestEdge.create(self.v2, self.v3, numbers=14)
 
         results = self.v1.outV(TestEdge)
-        assert len(results) == 2
-        assert self.v2 in results
-        assert self.v3 in results
+        self.assertEqual(len(results), 2)
+        self.assertIn(self.v2, results)
+        self.assertIn(self.v3, results)
 
         results = self.v1.outV(TestEdge, types=[OtherTestModel])
-        assert len(results) == 1
-        assert self.v3 in results
+        self.assertEqual(len(results), 1)
+        self.assertIn(self.v3, results)
 
-    
     def test_incoming_vertex_traversal(self):
         """Test that incoming vertex traversals work."""
         e1 = TestEdge.create(self.v1, self.v2, numbers=12)
@@ -202,11 +207,11 @@ class TestVertexTraversal(BaseThunderdomeTestCase):
         e3 = TestEdge.create(self.v2, self.v3, numbers=14)
 
         results = self.v2.inV(TestEdge)
-        assert len(results) == 1
-        assert self.v1 in results
+        self.assertEqual(len(results), 1)
+        self.assertIn(self.v1, results)
 
         results = self.v2.inV(TestEdge, types=[OtherTestModel])
-        assert len(results) == 0
+        self.assertEqual(len(results), 0)
 
     def test_outgoing_edge_traversals(self):
         """Test that outgoing edge traversals work."""
@@ -215,11 +220,11 @@ class TestVertexTraversal(BaseThunderdomeTestCase):
         e3 = OtherTestEdge.create(self.v2, self.v3, numbers=14)
 
         results = self.v2.outE()
-        assert len(results) == 1
-        assert e3 in results
+        self.assertEqual(len(results), 1)
+        self.assertIn(e3, results)
 
         results = self.v2.outE(types=[TestEdge])
-        assert len(results) == 0
+        self.assertEqual(len(results), 0)
 
     def test_incoming_edge_traversals(self):
         """Test that incoming edge traversals work."""
@@ -228,11 +233,11 @@ class TestVertexTraversal(BaseThunderdomeTestCase):
         e3 = OtherTestEdge.create(self.v2, self.v3, numbers=14)
 
         results = self.v2.inE()
-        assert len(results) == 1
-        assert e1 in results
+        self.assertEqual(len(results), 1)
+        self.assertIn(e1, results)
 
         results = self.v2.inE(types=[OtherTestEdge])
-        assert len(results) == 0
+        self.assertEqual(len(results), 0)
 
     def test_multiple_label_traversals(self):
         """ Tests that using multiple edges for traversals works """
@@ -240,21 +245,21 @@ class TestVertexTraversal(BaseThunderdomeTestCase):
         OtherTestEdge.create(self.v1, self.v3)
         YetAnotherTestEdge.create(self.v1, self.v4)
 
-        assert len(self.v1.outV()) == 3
+        self.assertEqual(len(self.v1.outV()), 3)
 
-        assert len(self.v1.outV(TestEdge)) == 1
-        assert len(self.v1.outV(OtherTestEdge)) == 1
-        assert len(self.v1.outV(YetAnotherTestEdge)) == 1
+        self.assertEqual(len(self.v1.outV(TestEdge)), 1)
+        self.assertEqual(len(self.v1.outV(OtherTestEdge)), 1)
+        self.assertEqual(len(self.v1.outV(YetAnotherTestEdge)), 1)
 
         out = self.v1.outV(TestEdge, OtherTestEdge)
-        assert len(out) == 2
-        assert self.v2.vid in [v.vid for v in out]
-        assert self.v3.vid in [v.vid for v in out]
+        self.assertEqual(len(out), 2)
+        self.assertIn(self.v2.vid, [v.vid for v in out])
+        self.assertIn(self.v3.vid, [v.vid for v in out])
 
         out = self.v1.outV(OtherTestEdge, YetAnotherTestEdge)
-        assert len(out) == 2
-        assert self.v3.vid in [v.vid for v in out]
-        assert self.v4.vid in [v.vid for v in out]
+        self.assertEqual(len(out), 2)
+        self.assertIn(self.v3.vid, [v.vid for v in out])
+        self.assertIn(self.v4.vid, [v.vid for v in out])
 
     def test_multiple_edge_traversal_with_type_filtering(self):
         """ Tests that using multiple edges for traversals works """
@@ -278,10 +283,10 @@ class TestVertexTraversal(BaseThunderdomeTestCase):
         v6 = OtherTestModel.create()
         YetAnotherTestEdge.create(v, v6)
 
-        assert len(v.outV()) == 6
+        self.assertEqual(len(v.outV()), 6)
 
-        assert len(v.outV(TestEdge, OtherTestEdge)) == 4
-        assert len(v.outV(TestEdge, OtherTestEdge, types=[TestModel])) == 2
+        self.assertEqual(len(v.outV(TestEdge, OtherTestEdge)), 4)
+        self.assertEqual(len(v.outV(TestEdge, OtherTestEdge, types=[TestModel])), 2)
 
     def test_edge_instance_traversal_types(self):
         """ Test traversals with edge instances work properly """
@@ -290,14 +295,14 @@ class TestVertexTraversal(BaseThunderdomeTestCase):
         yate = YetAnotherTestEdge.create(self.v1, self.v4)
 
         out = self.v1.outV(te, ote)
-        assert len(out) == 2
-        assert self.v2.vid in [v.vid for v in out]
-        assert self.v3.vid in [v.vid for v in out]
+        self.assertEqual(len(out), 2)
+        self.assertIn(self.v2.vid, [v.vid for v in out])
+        self.assertIn(self.v3.vid, [v.vid for v in out])
 
         out = self.v1.outV(ote, yate)
-        assert len(out) == 2
-        assert self.v3.vid in [v.vid for v in out]
-        assert self.v4.vid in [v.vid for v in out]
+        self.assertEqual(len(out), 2)
+        self.assertIn(self.v3.vid, [v.vid for v in out])
+        self.assertIn(self.v4.vid, [v.vid for v in out])
 
     def test_edge_label_string_traversal_types(self):
         """ Test traversals with edge instances work properly """
@@ -306,14 +311,14 @@ class TestVertexTraversal(BaseThunderdomeTestCase):
         YetAnotherTestEdge.create(self.v1, self.v4)
 
         out = self.v1.outV(TestEdge.get_label(), OtherTestEdge.get_label())
-        assert len(out) == 2
-        assert self.v2.vid in [v.vid for v in out]
-        assert self.v3.vid in [v.vid for v in out]
+        self.assertEqual(len(out), 2)
+        self.assertIn(self.v2.vid, [v.vid for v in out])
+        self.assertIn(self.v3.vid, [v.vid for v in out])
 
         out = self.v1.outV(OtherTestEdge.get_label(), YetAnotherTestEdge.get_label())
-        assert len(out) == 2
-        assert self.v3.vid in [v.vid for v in out]
-        assert self.v4.vid in [v.vid for v in out]
+        self.assertEqual(len(out), 2)
+        self.assertIn(self.v3.vid, [v.vid for v in out])
+        self.assertIn(self.v4.vid, [v.vid for v in out])
 
     def test_unknown_edge_traversal_filter_type_fails(self):
         """
@@ -339,6 +344,7 @@ class TestIndexCreation(BaseThunderdomeTestCase):
         super(TestIndexCreation, self).setUp()
         self.old_create_index = connection.create_key_index
         self.index_calls = []
+
         def new_create_index(name):
             #fire blanks
             self.index_calls.append(name)
@@ -360,7 +366,7 @@ class TestIndexCreation(BaseThunderdomeTestCase):
         """
         Tests that create_key_index is called when defining indexed columns
         """
-        assert len(self.index_calls) == 0
+        self.assertEqual(len(self.index_calls), 0)
 
         connection._index_all_fields = False
         
@@ -369,11 +375,11 @@ class TestIndexCreation(BaseThunderdomeTestCase):
             col2 = properties.Text(index=True, db_field='____column')
             col3 = properties.Text(db_field='____column3')
 
-        assert len(self.index_calls) == 2
-        assert 'vid' not in self.index_calls
-        assert 'col1' in self.index_calls
-        assert '____column' in self.index_calls
-        assert '____column3' not in self.index_calls
+        self.assertEqual(len(self.index_calls), 2)
+        self.assertNotIn('vid', self.index_calls)
+        self.assertIn('col1', self.index_calls)
+        self.assertIn('____column', self.index_calls)
+        self.assertNotIn('____column3', self.index_calls)
 
         connection._index_all_fields = True
         self.index_calls = []
@@ -382,7 +388,7 @@ class TestIndexCreation(BaseThunderdomeTestCase):
             col1 = properties.Text()
             col2 = properties.Text(db_field='____column')
 
-        assert len(self.index_calls) == 3
-        assert 'vid' in self.index_calls
-        assert 'col1' in self.index_calls
-        assert '____column' in self.index_calls
+        self.assertEqual(len(self.index_calls), 3)
+        self.assertIn('vid', self.index_calls)
+        self.assertIn('col1', self.index_calls)
+        self.assertIn('____column', self.index_calls)

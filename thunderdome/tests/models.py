@@ -22,8 +22,8 @@ from thunderdome import properties
 
 
 class TestModel(Vertex):
-    count   = properties.Integer()
-    text    = properties.Text(required=False)
+    count = properties.Integer()
+    text = properties.Text(required=False)
 
     
 class TestEdge(Edge):

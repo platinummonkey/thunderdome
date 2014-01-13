@@ -37,8 +37,8 @@ class TestEdgeIO(BaseThunderdomeTestCase):
         e1 = TestEdge.create(self.v1, self.v2, numbers=3)
         
         edges = self.v1.outE()
-        assert len(edges) == 1
-        assert edges[0].eid == e1.eid
+        self.assertEqual(len(edges), 1)
+        self.assertEqual(edges[0].eid, e1.eid)
         
     def test_model_updating_works_properly(self):
         """
@@ -50,26 +50,29 @@ class TestEdgeIO(BaseThunderdomeTestCase):
         e1.save()
         
         edges = self.v1.outE()
-        assert len(edges) == 1
-        assert edges[0].numbers == 20
+        self.assertEqual(len(edges), 1)
+        self.assertEqual(edges[0].numbers, 20)
 
     def test_model_deleting_works_properly(self):
-        """q
+        """
         Tests that an instance's delete method deletes the instance
         """
         e1 = TestEdge.create(self.v1, self.v2, numbers=3)
         
         e1.delete()
         edges = self.v1.outE()
-        assert len(edges) == 0
+        self.assertEqual(len(edges), 0)
 
     def test_reload(self):
-        """ Tests that the reload method performs an inplace update of an instance's values """
+        """
+        Tests that the reload method performs an inplace update of an instance's values
+        """
         e1 = TestEdge.create(self.v1, self.v2, numbers=3)
         e2 = TestEdge.get_by_eid(e1.eid)
+        print '\n', e1.eid, e2.eid, e1 == e2,
         e2.numbers = 5
         e2.save()
+        print e2.eid
 
-        e1.reload()
-        assert e1.numbers == 5
-
+        e1.reload(debug=True)
+        self.assertEqual(e1.numbers, 5)

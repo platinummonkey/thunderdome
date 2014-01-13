@@ -14,5 +14,3 @@ def get_list(eid) {
     v = g.v(eid)
     [null, 0, 1, [2, v, 3], 5]
 }
-
-

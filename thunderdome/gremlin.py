@@ -64,7 +64,6 @@ class BaseGremlinMethod(object):
         #configuring attributes
         self.parent_class = None
 
-
     def configure_method(self, klass, attr_name, gremlin_path):
         """
         sets up the methods internals
@@ -112,7 +111,7 @@ class BaseGremlinMethod(object):
                     break
 
             if gremlin_obj is None:
-                raise ThunderdomeGremlinException("The method '{}' wasnt found in {}".format(self.method_name, path))
+                raise ThunderdomeGremlinException("The method '{}' wasn't found in {}".format(self.method_name, path))
 
             for arg in gremlin_obj.args:
                 if arg in self.arg_list:
@@ -143,7 +142,7 @@ class BaseGremlinMethod(object):
             raise TypeError('{}() takes {} args, {} given'.format(self.attr_name, len(self.arg_list), len(args)))
 
         #check for and calculate callable defaults
-        for k,v in params.items():
+        for k, v in params.items():
             if callable(v):
                 params[k] = v()
 
@@ -151,7 +150,7 @@ class BaseGremlinMethod(object):
         for arg in args:
             params[arglist.pop(0)] = arg
 
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if k not in arglist:
                 an = self.attr_name
                 if k in params:
@@ -181,7 +180,7 @@ class BaseGremlinMethod(object):
             tmp = execute_query(self.function_body, params, transaction=self.transaction, context=context)
         except ThunderdomeQueryError as tqe:
             import pprint
-            msg  = "Error while executing Gremlin method\n\n"
+            msg = "Error while executing Gremlin method\n\n"
             msg += "[Method]\n{}\n\n".format(self.method_name)
             msg += "[Params]\n{}\n\n".format(pprint.pformat(params))
             msg += "[Function Body]\n{}\n".format(self.function_body)
@@ -207,7 +206,7 @@ class BaseGremlinMethod(object):
         from thunderdome.properties import DateTime, Decimal, UUID
 
         if isinstance(params, dict):
-            return {k:self.transform_params_to_database(v) for k,v in params.iteritems()}
+            return {k: self.transform_params_to_database(v) for k, v in params.iteritems()}
         if isinstance(params, list):
             return [self.transform_params_to_database(x) for x in params]
         if isinstance(params, BaseElement):
@@ -242,7 +241,7 @@ class GremlinMethod(BaseGremlinMethod):
         if isinstance(obj, dict) and '_id' in obj and '_type' in obj:
             return Element.deserialize(obj)
         elif isinstance(obj, dict):
-            return {k:GremlinMethod._deserialize(v) for k,v in obj.items()}
+            return {k: GremlinMethod._deserialize(v) for k, v in obj.items()}
         elif isinstance(obj, list):
             return [GremlinMethod._deserialize(v) for v in obj]
         else:

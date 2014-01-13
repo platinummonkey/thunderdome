@@ -10,11 +10,14 @@ from thunderdome import models
 from thunderdome.models import Edge, Vertex
 from thunderdome import properties
 
+
 class DBFieldVertex(Vertex):
-    text    = properties.Text(db_field='vertex_text')
+    text = properties.Text(db_field='vertex_text')
+
 
 class DBFieldEdge(Edge):
-    text    = properties.Text(db_field='edge_text')
+    text = properties.Text(db_field='edge_text')
+
 
 class TestDbField(BaseThunderdomeTestCase):
 
@@ -24,11 +27,10 @@ class TestDbField(BaseThunderdomeTestCase):
         e1 = DBFieldEdge.create(v1, v2, text='edge1')
 
         v1_raw = connection.execute_query('g.v(eid)', params={'eid':v1.eid})
-        assert v1.text == v1_raw[0]['vertex_text']
+        self.assertEqual(v1.text, v1_raw[0]['vertex_text'])
 
         v2_raw = connection.execute_query('g.v(eid)', params={'eid':v2.eid})
-        assert v2.text == v2_raw[0]['vertex_text']
+        self.assertEqual(v2.text, v2_raw[0]['vertex_text'])
 
         e1_raw = connection.execute_query('g.e(eid)', params={'eid':e1.eid})
-        assert e1.text == e1_raw[0]['edge_text']
-
+        self.assertEqual(e1.text, e1_raw[0]['edge_text'])
