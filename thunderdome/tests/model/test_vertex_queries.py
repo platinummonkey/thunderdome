@@ -21,29 +21,29 @@ class SimpleQueryTest(BaseThunderdomeTestCase):
 
     def test_limit(self):
         result = self.q.limit(10)._get_partial()
-        assert result == "g.v(eid).query().limit(limit)"
+        self.assertEqual(result, "g.v(eid).query().limit(limit)")
 
     def test_direction_in(self):
         result = self.q.direction(IN)._get_partial()
-        assert result == "g.v(eid).query().direction(IN)"
+        self.assertEqual(result, "g.v(eid).query().direction(IN)")
 
     def test_direction_out(self):
         result = self.q.direction(OUT)._get_partial()
-        assert result == "g.v(eid).query().direction(OUT)"
+        self.assertEqual(result, "g.v(eid).query().direction(OUT)")
 
     def test_labels(self):
         result = self.q.labels('test')._get_partial()
-        assert result == "g.v(eid).query().labels('test')"
+        self.assertEqual(result, "g.v(eid).query().labels('test')")
         # ensure the original wasn't modified
-        assert self.q._labels == []
+        self.assertListEqual(self.q._labels, [])
 
     def test_2labels(self):
         result = self.q.labels('test', 'test2')._get_partial()
-        assert result == "g.v(eid).query().labels('test', 'test2')"
+        self.assertEqual(result, "g.v(eid).query().labels('test', 'test2')")
 
     def test_object_label(self):
         result = self.q.labels(MockEdge)._get_partial()
-        assert result == "g.v(eid).query().labels('mock_edge')", result
+        self.assertEqual(result, "g.v(eid).query().labels('mock_edge')")
 
     # def test_has(self):
     #     result = self.q.has(MockEdge.age, 10)._get_parial()
@@ -59,17 +59,16 @@ class SimpleQueryTest(BaseThunderdomeTestCase):
 
     def test_has_double_casting(self):
         result = self.q.has('fierceness', 3.3)._get_partial()
-        assert result == "g.v(eid).query().has('fierceness', v0 as double, Query.Compare.EQUAL)", result
+        self.assertEqual(result, "g.v(eid).query().has('fierceness', v0 as double, Query.Compare.EQUAL)")
 
     def test_has_int(self):
         result = self.q.has('age', 21, GREATER_THAN)._get_partial()
-        assert result == "g.v(eid).query().has('age', v0, Query.Compare.GREATER_THAN)", result
+        self.assertEqual(result, "g.v(eid).query().has('age', v0, Query.Compare.GREATER_THAN)")
 
     def test_intervals(self):
         result = self.q.interval('age', 10, 20)._get_partial()
-        assert result == "g.v(eid).query().interval('age', v0, v1)", result
+        self.assertEqual(result, "g.v(eid).query().interval('age', v0, v1)")
 
     def test_double_interval(self):
         result = self.q.interval('fierceness', 2.5, 5.2)._get_partial()
-        assert result == "g.v(eid).query().interval('fierceness', v0 as double, v1 as double)", result
-
+        self.assertEqual(result, "g.v(eid).query().interval('fierceness', v0 as double, v1 as double)")

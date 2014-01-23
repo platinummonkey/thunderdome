@@ -37,3 +37,6 @@ html/
 .mr.developer.cfg
 .DS_Store
 .noseids
+
+# virtualenv
+venv/

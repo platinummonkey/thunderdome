@@ -54,7 +54,7 @@ class TestOnceSaveStrategy(BaseThunderdomeTestCase):
     def test_should_be_able_to_resave_with_once_strategy(self):
         """Once save strategy should allow saving so long as columns haven't changed'"""
         v = OnceSaveStrategy.create()
-        assert 'vid' not in v.as_save_params()
+        self.assertNotIn('vid', v.as_save_params())
         v.save()
         
     def test_should_enforce_once_save_strategy(self):
@@ -76,13 +76,13 @@ class TestOnChangeSaveStrategy(BaseThunderdomeTestCase):
     def test_should_persist_changes_with_on_change_strategy(self):
         """Should still persist changes with onchange save strategy"""
         v = OnChangeSaveStrategy.create(val=1)
-        assert 'val' not in v.as_save_params()
+        self.assertNotIn('val', v.as_save_params())
         v.val = 2
-        assert 'val' in v.as_save_params()
+        self.assertIn('val', v.as_save_params())
         v.save()
 
         v1 = OnChangeSaveStrategy.get(v.vid)
-        assert v1.val == 2
+        self.assertEqual(v1.val, 2)
 
         
 class TestAlwaysSaveStrategy(BaseThunderdomeTestCase):
@@ -90,13 +90,13 @@ class TestAlwaysSaveStrategy(BaseThunderdomeTestCase):
     def test_should_be_able_to_save_with_always(self):
         """Should be able to save with always save strategy"""
         v = AlwaysSaveStrategy.create(val=1)
-        assert 'val' in v.as_save_params()
+        self.assertIn('val', v.as_save_params())
         v.val = 2
-        assert 'val' in v.as_save_params()
+        self.assertIn('val', v.as_save_params())
         v.save()
 
         v1 = AlwaysSaveStrategy.get(v.vid)
-        assert v1.val == 2
+        self.assertEqual(v1.val, 2)
 
 
 class TestModelLevelSaveStrategy(BaseThunderdomeTestCase):
@@ -104,15 +104,15 @@ class TestModelLevelSaveStrategy(BaseThunderdomeTestCase):
     def test_default_save_strategy_should_be_always(self):
         """Default save strategy should be to always save"""
         v = DefaultModelLevelSaveStrategy.create(val=1)
-        assert 'val' in v.as_save_params()
+        self.assertIn('val', v.as_save_params())
         v.val = 2
-        assert 'val' in v.as_save_params()
+        self.assertIn('val', v.as_save_params())
         v.save()
         
     def test_should_use_default_model_save_strategy(self):
         """Should use model-level save strategy if none provided"""
         v = ModelLevelSaveStrategy.create(val=1)
-        assert 'val' not in v.as_save_params()
+        self.assertNotIn('val', v.as_save_params())
         v.val = 2
-        assert 'val' in v.as_save_params()
+        self.assertIn('val', v.as_save_params())
         v.save()

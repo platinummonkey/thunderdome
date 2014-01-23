@@ -33,10 +33,10 @@ class GroovyFunctionParser(object):
     """
 
     # Simple Groovy sub-grammar definitions
-    KeywordDef  = pyparsing.Keyword('def')
-    VarName     = pyparsing.Regex(r'[A-Za-z_]\w*')
-    FuncName    = VarName
-    FuncDefn    = KeywordDef + FuncName + "(" + pyparsing.delimitedList(VarName) + ")" + "{"
+    KeywordDef = pyparsing.Keyword('def')
+    VarName = pyparsing.Regex(r'[A-Za-z_]\w*')
+    FuncName = VarName
+    FuncDefn = KeywordDef + FuncName + "(" + pyparsing.delimitedList(VarName) + ")" + "{"
     
     # Result named tuple
     GroovyFunction = collections.namedtuple('GroovyFunction', ['name', 'args', 'body', 'defn'])

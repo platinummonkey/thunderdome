@@ -29,15 +29,13 @@ from thunderdome import properties
 import unittest
 
 
-
 class TestPModel(PaginatedVertex):
-    count   = properties.Integer()
-    text    = properties.Text(required=False)
+    count = properties.Integer()
+    text = properties.Text(required=False)
 
     
 class TestPEdge(Edge):
     numbers = properties.Integer()
-
 
 
 class PaginatedVertexTest(unittest.TestCase):
@@ -50,16 +48,16 @@ class PaginatedVertexTest(unittest.TestCase):
             edges.append(TestPEdge.create(t, t2, numbers=x))
         
         tmp = t.outV(page_num=1, per_page=2)
-        assert len(tmp) == 2, len(tmp)
+        self.assertEqual(len(tmp), 2)
         
         tmp = t.outE(page_num=2, per_page=2)
         
-        assert len(tmp) == 2, len(tmp)
-        assert tmp[0].numbers == 2
-        
+        self.assertEqual(len(tmp), 2)
+        self.assertEqual(tmp[0].numbers, 2)
+
         tmp = t.outE(page_num=3, per_page=2)
-        assert len(tmp) == 1, len(tmp)
+        self.assertEqual(len(tmp), 1)
         
         # just to be sure
         all_edges = t.outV()
-        assert len(all_edges) == 5
+        self.assertEqual(len(all_edges), 5)

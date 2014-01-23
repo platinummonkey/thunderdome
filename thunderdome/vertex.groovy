@@ -13,7 +13,7 @@ def _save_vertex(eid, attrs) {
             if (item.value == null) {
                 v.removeProperty(item.key)
             } else {
-                v.setProperty(item.key, item.value)
+                v.addProperty(item.key, item.value)
             }
         }
         g.stopTransaction(SUCCESS)
@@ -103,4 +103,8 @@ def _delete_related(eid, operation, labels) {
     g.stopTransaction(FAILURE)
     raise(err)
   }
+}
+
+def find_by_value(field, value) {
+    g.V(field, value)
 }

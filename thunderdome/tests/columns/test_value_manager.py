@@ -31,78 +31,77 @@ class TestChangedProperty(BaseThunderdomeTestCase):
     def test_string_update(self):
         """ Tests changes on string types """
         vm = String.value_manager(None, None, 'str')
-        assert not vm.changed
+        self.assertFalse(vm.changed)
         vm.value = 'unicode'
-        assert vm.changed
+        self.assertTrue(vm.changed)
 
     def test_string_inplace_update(self):
         """ Tests changes on string types """
         vm = String.value_manager(None, None, 'str')
-        assert not vm.changed
+        self.assertFalse(vm.changed)
         vm.value += 's'
-        assert vm.changed
+        self.assertTrue(vm.changed)
 
     def test_integer_update(self):
         """ Tests changes on string types """
         vm = Integer.value_manager(None, None, 5)
-        assert not vm.changed
+        self.assertFalse(vm.changed)
         vm.value = 4
-        assert vm.changed
+        self.assertTrue(vm.changed)
 
     def test_integer_inplace_update(self):
         """ Tests changes on string types """
         vm = Integer.value_manager(None, None, 5)
-        assert not vm.changed
+        self.assertFalse(vm.changed)
         vm.value += 1
-        assert vm.changed
+        self.assertTrue(vm.changed)
 
     def test_datetime_update(self):
         """ Tests changes on string types """
         now = datetime.now()
         vm = DateTime.value_manager(None, None, now)
-        assert not vm.changed
+        self.assertFalse(vm.changed)
         vm.value = now + timedelta(days=1)
-        assert vm.changed
+        self.assertTrue(vm.changed)
 
     def test_decimal_update(self):
         """ Tests changes on string types """
         vm = Decimal.value_manager(None, None, D('5.00'))
-        assert not vm.changed
+        self.assertFalse(vm.changed)
         vm.value = D('4.00')
-        assert vm.changed
+        self.assertTrue(vm.changed)
 
     def test_decimal_inplace_update(self):
         """ Tests changes on string types """
         vm = Decimal.value_manager(None, None, D('5.00'))
-        assert not vm.changed
+        self.assertFalse(vm.changed)
         vm.value += D('1.00')
-        assert vm.changed
+        self.assertTrue(vm.changed)
 
     def test_dictionary_update(self):
         """ Tests changes on string types """
-        vm = Dictionary.value_manager(None, None, {1:2, 3:4})
-        assert not vm.changed
-        vm.value = {4:5}
-        assert vm.changed
+        vm = Dictionary.value_manager(None, None, {1: 2, 3: 4})
+        self.assertFalse(vm.changed)
+        vm.value = {4: 5}
+        self.assertTrue(vm.changed)
 
     def test_dictionary_inplace_update(self):
         """ Tests changes on string types """
-        vm = Dictionary.value_manager(None, None, {1:2, 3:4})
-        assert not vm.changed
+        vm = Dictionary.value_manager(None, None, {1: 2, 3: 4})
+        self.assertFalse(vm.changed)
         vm.value[4] = 5
-        assert vm.changed
+        self.assertTrue(vm.changed)
 
     def test_list_update(self):
         """ Tests changes on string types """
-        vm = List.value_manager(None, None, [1,2,3])
-        assert not vm.changed
-        vm.value = [4,5,6]
-        assert vm.changed
+        vm = List.value_manager(None, None, [1, 2, 3])
+        self.assertFalse(vm.changed)
+        vm.value = [4, 5, 6]
+        self.assertTrue(vm.changed)
 
     def test_list_inplace_update(self):
         """ Tests changes on string types """
-        vm = List.value_manager(None, None, [1,2,3])
-        assert not vm.changed
+        vm = List.value_manager(None, None, [1, 2, 3])
+        self.assertFalse(vm.changed)
         vm.value.append(4)
-        assert vm.changed
-
+        self.assertTrue(vm.changed)

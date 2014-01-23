@@ -21,9 +21,11 @@ from thunderdome.containers import Table
 
 from unittest import TestCase
 
+
 class Person(object):
     def __init__(self, name):
         self.name = name
+
 
 class SomeEdge(object):
     def __init__(self, nickname):
@@ -38,21 +40,21 @@ class TableTest(TestCase):
         self.t = Table(self.data)
     
     def test_length(self):
-        assert len(self.t) == 3
+        self.assertEqual(len(self.t), 3)
     
     def test_iteration(self):
         i = 0
         for r in self.t:
             i += 1
-            assert r.v.name is not None
-        assert i == 3
+            self.assertIsNotNone(r.v.name)
+        self.assertEqual(i, 3)
         
     def test_access_element(self):
-        assert self.t[0].v.name == 'jon'
-        assert self.t[0].e.nickname == 'rustyrazorblade'
+        self.assertEqual(self.t[0].v.name, 'jon')
+        self.assertEqual(self.t[0].e.nickname, 'rustyrazorblade')
         
-        assert self.t[1].v.name == 'eric', self.t[1].v.name
-        assert self.t[2].e.nickname == 'bmoney'
+        self.assertEqual(self.t[1].v.name, 'eric', self.t[1].v.name)
+        self.assertEqual(self.t[2].e.nickname, 'bmoney')
 
 
 class EmptyTableTest(TestCase):
@@ -65,4 +67,3 @@ class EmptyTableTest(TestCase):
         t = Table([[]])
         with self.assertRaises(IndexError):
             t[0]
-

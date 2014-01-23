@@ -17,11 +17,13 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
 class Row(object):
     def __init__(self, data):
-        for k,v in data.iteritems():
+        for k, v in data.iteritems():
             setattr(self, k, v)
-    
+
+
 class Table(object):
     """
     A table accepts the results of a GremlinMethod in it's
@@ -48,9 +50,8 @@ class Table(object):
 
         self._gremlin_result = gremlin_result
         self._position = 0
-        
-    
-    def __getitem__(self, key): 
+
+    def __getitem__(self, key):
         """
         returns an enhanced dictionary
         """
@@ -69,7 +70,6 @@ class Table(object):
         tmp = self._gremlin_result[self._position]
         self._position += 1
         return Row(tmp)
-    
-    
+
     def __len__(self):
         return len(self._gremlin_result)

@@ -133,20 +133,25 @@ class BaseValueManager(object):
 
 class Column(object):
     """Base class for column types"""
-
+    data_type = "Object"
     value_manager = BaseValueManager
     instance_counter = 0
 
     def __init__(self,
+                 description=None,
                  primary_key=False,
                  index=False,
+                 index_ext=None,
                  db_field=None,
                  default=None,
                  required=False,
-                 save_strategy=None):
+                 save_strategy=None,
+                 unique=None):
         """
         Initialize this column with the given information.
 
+        :param description: description of this field
+        :type description: str
         :param primary_key: Indicates whether or not this is primary key
         :type primary_key: boolean
         :param index: Indicates whether or not this field should be indexed
@@ -161,12 +166,15 @@ class Column(object):
         :type save_strategy: int
 
         """
+        self.description = description
         self.primary_key = primary_key
         self.index = index
+        self.index_ext = index_ext
         self.db_field = db_field
         self.default = default
         self.required = required
         self.save_strategy = save_strategy
+        self.unique = unique
 
         #the column name in the model definition
         self.column_name = None
@@ -268,6 +276,7 @@ class Column(object):
 
 
 class String(Column):
+    data_type = "String"
 
     def __init__(self, *args, **kwargs):
         required = kwargs.get('required', False)
@@ -300,7 +309,9 @@ class String(Column):
 
 Text = String
 
+
 class Integer(Column):
+    data_type = "Integer"
 
     def validate(self, value):
         val = super(Integer, self).validate(value)
@@ -324,6 +335,7 @@ class Integer(Column):
 
 
 class DateTime(Column):
+    data_type = "DateTime"
 
     def __init__(self, strict=True, **kwargs):
         """
@@ -331,7 +343,7 @@ class DateTime(Column):
 
         :param strict: Whether or not to attempt to automatically coerce types
         :type strict: boolean
-        
+
         """
         self.strict = strict
         super(DateTime, self).__init__(**kwargs)
@@ -351,15 +363,15 @@ class DateTime(Column):
             else:
                 raise ValidationError("'{}' is not a datetime object".format(value))
 
-        tmp = time.mktime(value.timetuple()) # gives us a float with .0
+        tmp = time.mktime(value.timetuple())  # gives us a float with .0
         # microtime is a 6 digit int, so we bring it down to .xxx and add it to the float TS
-        tmp = tmp + float(value.microsecond) / 1000000
+        tmp += float(value.microsecond) / 1000000
         return tmp
 
 
 class UUID(Column):
     """Universally Unique Identifier (UUID) type - UUID4 by default"""
-    
+    data_type = "String"
     re_uuid = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
 
     def __init__(self, default=lambda: str(uuid4()), **kwargs):
@@ -386,7 +398,6 @@ class UUID(Column):
 
 
 class Boolean(Column):
-
     def to_python(self, value):
         return bool(value)
 
@@ -396,6 +407,7 @@ class Boolean(Column):
 
 
 class Double(Column):
+    data_type = "Double"
 
     def __init__(self, **kwargs):
         self.db_type = 'double'
@@ -422,7 +434,7 @@ class Double(Column):
 
 class Float(Double):
     """Float class for backwards compatability / if you really want to"""
-    
+
     def __init__(self, **kwargs):
         warnings.warn("Float type is deprecated. Please use Double.",
                       category=DeprecationWarning)
@@ -454,6 +466,7 @@ class Dictionary(Column):
 
 
 class List(Column):
+    data_type = "ArrayList"
 
     def validate(self, value):
         val = super(List, self).validate(value)

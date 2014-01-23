@@ -17,10 +17,27 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-class ThunderdomeException(Exception): pass
-class ModelException(ThunderdomeException): pass
-class ValidationError(ThunderdomeException): pass
-class DoesNotExist(ThunderdomeException): pass
-class MultipleObjectsReturned(ThunderdomeException): pass
-class WrongElementType(ThunderdomeException): pass
+
+class ThunderdomeException(Exception):
+    pass
+
+
+class ModelException(ThunderdomeException):
+    pass
+
+
+class ValidationError(ThunderdomeException):
+    pass
+
+
+class DoesNotExist(ThunderdomeException):
+    pass
+
+
+class MultipleObjectsReturned(ThunderdomeException):
+    pass
+
+
+class WrongElementType(ThunderdomeException):
+    pass
 

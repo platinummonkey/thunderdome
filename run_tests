@@ -1,2 +1,4 @@
 #!/bin/sh
-python -m unittest discover thunderdome 'test_*.py'
+rm -Rf build/ dist/ thunderdome.egg-info
+source venv/Scripts/activate && echo -e 'y\n' | pip uninstall thunderdome
+source venv/Scripts/activate && python -m unittest discover thunderdome 'test_*.py'

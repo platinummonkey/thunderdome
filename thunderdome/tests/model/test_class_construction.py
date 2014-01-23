@@ -26,12 +26,15 @@ import thunderdome
 
 from thunderdome.tests.models import TestModel
 
+
 class WildDBNames(Vertex):
     content = properties.Text(db_field='words_and_whatnot')
     numbers = properties.Integer(db_field='integers_etc')
             
+
 class Stuff(Vertex):
     num = properties.Integer()
+
 
 class TestModelClassFunction(BaseThunderdomeTestCase):
     """
@@ -44,7 +47,7 @@ class TestModelClassFunction(BaseThunderdomeTestCase):
         and replaced with simple value attributes
         """
 
-        #check class attibutes
+        #check class attributes
         self.assertHasAttr(TestModel, '_columns')
         self.assertHasAttr(TestModel, 'vid')
         self.assertHasAttr(TestModel, 'text')
@@ -61,7 +64,6 @@ class TestModelClassFunction(BaseThunderdomeTestCase):
         Tests that the db_map is properly defined
         -the db_map allows columns
         """
-
 
         db_map = WildDBNames._db_map
         self.assertEquals(db_map['words_and_whatnot'], 'content')
@@ -88,22 +90,28 @@ class TestModelClassFunction(BaseThunderdomeTestCase):
         self.assertEquals(inst1.count, 5)
         self.assertEquals(inst2.count, 7)
 
+
 class RenamedTest(thunderdome.Vertex):
     element_type = 'manual_name'
     
     vid = thunderdome.UUID(primary_key=True)
     data = thunderdome.Text()
         
+
 class TestManualTableNaming(BaseThunderdomeTestCase):
     
     def test_proper_table_naming(self):
         assert RenamedTest.get_element_type() == 'manual_name'
 
+
 class BaseAbstractVertex(thunderdome.Vertex):
     __abstract__ = True
     data = thunderdome.Text()
 
-class DerivedAbstractVertex(BaseAbstractVertex): pass
+
+class DerivedAbstractVertex(BaseAbstractVertex):
+    pass
+
 
 class TestAbstractElementAttribute(BaseThunderdomeTestCase):
 
@@ -124,10 +132,9 @@ class TestAbstractElementAttribute(BaseThunderdomeTestCase):
             bm.update(data='something else')
 
 
-
 class TestValidationVertex(Vertex):
-    num     = thunderdome.Integer(required=True)
-    num2    = thunderdome.Integer(required=True)
+    num = thunderdome.Integer(required=True)
+    num2 = thunderdome.Integer(required=True)
 
     def validate_num(self, value):
         val = self.validate_field('num', value)
@@ -136,22 +143,13 @@ class TestValidationVertex(Vertex):
     def validate_num2(self, value):
         return 5
 
+
 class TestValidation(BaseThunderdomeTestCase):
 
     def test_custom_validation_method(self):
         v = TestValidationVertex.create(num=6)
-        assert v.num == 5
-        assert v.num2 == 5
+        self.assertEqual(v.num, 5)
+        self.assertEqual(v.num2, 5)
 
         with self.assertRaises(ValidationError):
             TestValidationVertex.create()
-
-
-
-
-
-
-
-
-
-

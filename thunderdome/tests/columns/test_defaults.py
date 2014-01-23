@@ -24,6 +24,7 @@ import uuid
 from thunderdome.properties import *
 from thunderdome.tests.base import BaseThunderdomeTestCase
 
+
 class TestDefaultValue(BaseThunderdomeTestCase):
     """ Tests that setting default values works on all column types """
 
@@ -71,12 +72,12 @@ class TestDefaultValue(BaseThunderdomeTestCase):
 
     def test_dictionary_default(self):
         """ Tests dictionary defaults work properly """
-        default = {1:2}
+        default = {1: 2}
         prop = Dictionary(default=default, required=True)
         self.assertEqual(prop.to_database(None), prop.to_database(default))
 
     def test_list_default(self):
         """ Tests list defaults work properly """
-        default = [1,2]
+        default = [1, 2]
         prop = String(default=default, required=True)
         self.assertEqual(prop.to_database(None), prop.to_database(default))
