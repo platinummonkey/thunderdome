@@ -924,6 +924,9 @@ class Edge(Element):
     
     _save_edge = GremlinMethod()
     _get_edges_between = GremlinMethod(classmethod=True)
+
+    # edge id
+    edge_id = columns.UUID(save_strategy=columns.SAVE_ONCE)
     
     def __init__(self, outV, inV, **values):
         """
@@ -941,6 +944,44 @@ class Edge(Element):
         self._outV = outV
         self._inV = inV
         super(Edge, self).__init__(**values)
+
+    @classmethod
+    def all(cls, edge_ids, as_dict=False):
+        """
+        Load all edges with the given edge_ids from the graph. By default this
+        will return a list of edges but if as_dict is True then it will
+        return a dictionary containing edge_ids as keys and edges found as
+        values.
+
+        :param edge_ids: A list of thunderdome UUIDS (edge_ids)
+        :type edge_ids: list
+        :param as_dict: Toggle whether to return a dictionary or list
+        :type as_dict: boolean
+        :rtype: dict or list
+        """
+        if not isinstance(edge_ids, (list, tuple)):
+            raise ThunderdomeQueryError("vids must be of type list or tuple")
+        
+        strids = [str(e) for e in edge_ids]
+        qs = ['edgeids.collect{g.E("edge_id", it).toList()[0]}']
+        
+        results = execute_query('\n'.join(qs), {'edgeids':strids})
+        results = filter(None, results)
+        
+        if len(results) != len(edge_ids):
+            raise ThunderdomeQueryError("the number of results don't match the number of edge_ids requested")
+        
+        objects = []
+        for r in results:
+            try:
+                objects += [Element.deserialize(r)]
+            except KeyError:
+                raise ThunderdomeQueryError('Edge type "{}" is unknown'.format())
+            
+        if as_dict:
+            return {e.edge_id:e for e in objects}
+        
+        return objects
         
     @classmethod
     def get_label(cls):
@@ -1005,6 +1046,32 @@ class Edge(Element):
         del results['_id']
         del results['_type']
         return results
+
+    @classmethod
+    def get(cls, edge_id):
+        """
+        Look up edge by thunderdome assigned UUID. Raises a DoesNotExist
+        exception if a edge with the given edge_id was not found. Raises a
+        MultipleObjectsReturned exception if the edge_id corresponds to more
+        than one edge in the graph.
+        
+        :param edge_id: The thunderdome assigned UUID
+        :type edge_id: str
+        :rtype: thunderdome.models.Edge
+        """
+        try:
+            results = cls.all([edge_id])
+            if len(results) >1:
+                raise cls.MultipleObjectsReturned
+
+            result = results[0]
+            if not isinstance(result, cls):
+                raise WrongElementType(
+                    '{} is not an instance or subclass of {}'.format(result.__class__.__name__, cls.__name__)
+                )
+            return result
+        except ThunderdomeQueryError:
+            raise cls.DoesNotExist
 
     @classmethod
     def get_by_eid(cls, eid):
